@@ -83,3 +83,7 @@ obj-$(CONFIG_MSM_BCL_CTL)	+= msm_bcl.o
 obj-$(CONFIG_MSM_BCL_PERIPHERAL_CTL) += bcl_peripheral.o
 obj-$(CONFIG_POWER_RESET)	+= reset/
 obj-$(CONFIG_ARCH_MSM)		+= qcom/
+obj-y += huawei_adc/
+obj-y += huawei/
+obj-y += cw2015_fuel_gauge.o
+obj-y	+= bq24157_charger.o
