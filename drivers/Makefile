@@ -172,3 +172,6 @@ obj-$(CONFIG_BIF)		+= bif/
 
 obj-$(CONFIG_SENSORS)		+= sensors/
 obj-$(CONFIG_SENSORS_SSC)	+= sensors/
+
+# Huawei Stuffs
+obj-$(CONFIG_HUAWEI_CPU_INFO) += cpuinfo/

@@ -196,4 +196,8 @@ source "drivers/firmware/Kconfig"
 
 source "drivers/bif/Kconfig"
 
+# Huawei Stuffs
+
+source "drivers/cpuinfo/Kconfig"
+
 endmenu
