@@ -16,6 +16,7 @@
 
 #include "msm.h"
 #include "msm_isp_util.h"
+#include "msm_isp.h"
 #include "msm_isp_axi_util.h"
 #include "msm_isp_stats_util.h"
 #include "msm_camera_io_util.h"
