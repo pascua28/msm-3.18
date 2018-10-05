@@ -2733,11 +2733,26 @@ int mmc_set_signal_voltage(struct mmc_host *host, int signal_voltage, u32 ocr)
 		err = -EAGAIN;
 
 power_cycle:
+#ifdef CONFIG_HUAWEI_KERNEL
 	if (err) {
+		pr_info("%s: Signal voltage switch failed, "
+			"power cycling card\n", mmc_hostname(host));
+		mmc_power_cycle(host, ocr);
+	}
+	else
+	{
+		if(host && (!strcmp(mmc_hostname(host),"mmc1")))
+			pr_info("%s: host and card voltage have changed into 1.8v success!\n", mmc_hostname(host));
+	}
+
+#else
+	if (err) {
+
 		pr_debug("%s: Signal voltage switch failed, "
 			"power cycling card\n", mmc_hostname(host));
 		mmc_power_cycle(host, ocr);
 	}
+#endif
 
 exit:
 	mmc_host_clk_release(host);
@@ -4159,6 +4174,16 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		spin_lock_irqsave(&host->lock, flags);
 		host->rescan_disable = 1;
 		spin_unlock_irqrestore(&host->lock, flags);
+#ifdef CONFIG_HUAWEI_KERNEL
+		if (!strcmp(mmc_hostname(host), "mmc1") && !(host->caps & MMC_CAP_NONREMOVABLE))
+		{
+			if(host->sd_init_retry_cnt >= 5)
+			{
+				host->change_slot = 0;
+			}
+			pr_err("%s %d host->sd_init_retry_cnt = %d  host->change_slot =%d \n",__func__,__LINE__,host->sd_init_retry_cnt,host->change_slot);
+		}
+#endif
 		cancel_delayed_work_sync(&host->detect);
 
 		if (!host->bus_ops)

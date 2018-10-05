@@ -1013,12 +1013,26 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	WARN_ON(!host->claimed);
 
 	err = mmc_sd_get_cid(host, ocr, cid, &rocr);
+#ifdef CONFIG_HUAWEI_KERNEL
+	if (host && err)
+	{
+		return err;
+	}
+#else
 	if (err)
 		return err;
+#endif
 
 	if (oldcard) {
+#ifdef CONFIG_HUAWEI_KERNEL
+		if ((memcmp(cid, oldcard->raw_cid, sizeof(cid)) != 0) && host)
+		{
+			return -ENOENT;
+		}
+#else
 		if (memcmp(cid, oldcard->raw_cid, sizeof(cid)) != 0)
 			return -ENOENT;
+#endif
 
 		card = oldcard;
 	} else {
@@ -1046,8 +1060,24 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 
 	if (!oldcard) {
 		err = mmc_sd_get_csd(host, card);
+#ifdef CONFIG_HUAWEI_KERNEL
+		if (err && host)
+		{
+			/*
+			* send cmd9 to get csd information (e.g.block length, card capacity, etc)
+			*/
+			pr_err("%s: send cmd9 to get csd fail when init sd first time, err=%d\n", mmc_hostname(host), err);
+
+			goto free_card;
+		}
+		else if(!err && host)
+		{
+			pr_info("%s: get csd successful, clock is %dHz\n", mmc_hostname(host), card->csd.max_dtr);
+		}
+#else
 		if (err)
 			goto free_card;
+#endif
 
 		mmc_decode_cid(card);
 	}
@@ -1429,7 +1459,23 @@ int mmc_attach_sd(struct mmc_host *host)
 
 	err = mmc_send_app_op_cond(host, 0, &ocr);
 	if (err)
-		return err;
+#ifdef CONFIG_HUAWEI_KERNEL
+	{
+		if (host && !strcmp(mmc_hostname(host), "mmc1") && !(host->caps & MMC_CAP_NONREMOVABLE))
+		{
+			host->sd_init_retry_cnt++ ;
+			host->sd_present = 0;
+			pr_err("%s %d app_op host->sd_init_retry_cnt = %d  host->sd_present = %d\n",__func__,__LINE__,host->sd_init_retry_cnt, host->sd_present);
+			return err;
+		}
+		else
+		{
+			return err;
+		}
+	}
+#else
+    return err;
+#endif
 
 	mmc_attach_bus(host, &mmc_sd_ops);
 	if (host->ocr_avail_sd)

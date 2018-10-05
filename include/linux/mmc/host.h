@@ -532,6 +532,13 @@ struct mmc_host {
 	unsigned int		retune_period;	/* re-tuning period in secs */
 	struct timer_list	retune_timer;	/* for periodic re-tuning */
 
+#ifdef CONFIG_HUAWEI_KERNEL
+	unsigned int         change_slot;/*sd slot change*/
+	unsigned int         sd_init_retry_cnt;
+	unsigned int         sd_present;
+	unsigned int         sd_acmd41_timeout_cnt;
+#endif
+
 	bool			trigger_card_event; /* card_event necessary */
 
 	struct mmc_card		*card;		/* device attached to this host */

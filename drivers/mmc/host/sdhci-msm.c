@@ -2194,7 +2194,16 @@ static int sdhci_msm_setup_vreg(struct sdhci_msm_pltfm_data *pdata,
 			if (enable)
 				ret = sdhci_msm_vreg_enable(vreg_table[i]);
 			else
+#ifdef CONFIG_HUAWEI_KERNEL
+			{
 				ret = sdhci_msm_vreg_disable(vreg_table[i]);
+				/* add delay between vdd and vddio when power down for SD card */
+				if((i==0) && (pdata->nonremovable != true))
+					udelay(1300);
+			}
+#else
+				ret = sdhci_msm_vreg_disable(vreg_table[i])
+#endif
 			if (ret)
 				goto out;
 		}
@@ -4338,6 +4347,15 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 
 	if (msm_host->pdata->nonremovable)
 		msm_host->mmc->caps |= MMC_CAP_NONREMOVABLE;
+#ifdef CONFIG_HUAWEI_KERNEL
+	else
+	{
+		msm_host->mmc->change_slot = 1;
+		msm_host->mmc->sd_init_retry_cnt=0;
+		msm_host->mmc->sd_present=1;
+		msm_host->mmc->sd_acmd41_timeout_cnt = 0;
+	}
+#endif
 
 	if (msm_host->pdata->nonhotplug)
 		msm_host->mmc->caps2 |= MMC_CAP2_NONHOTPLUG;

@@ -243,6 +243,10 @@ static u32 s1_delay[PON_S1_COUNT_MAX + 1] = {
 	3072, 4480, 6720, 10256
 };
 
+#ifdef CONFIG_HUAWEI_KERNEL
+int huawei_pon_regs[MAX_REG_TYPE] = {-1, -1, -1};
+#endif
+
 static const char * const qpnp_pon_reason[] = {
 	[0] = "Triggered from Hard Reset",
 	[1] = "Triggered from SMPL (sudden momentary power loss)",
@@ -796,6 +800,12 @@ static int qpnp_pon_store_and_clear_warm_reset(struct qpnp_pon *pon)
 			QPNP_PON_WARM_RESET_REASON1(pon), rc);
 		return rc;
 	}
+
+#ifdef CONFIG_HUAWEI_KERNEL
+	if (0 == pon->spmi->sid){
+		huawei_pon_regs[WARM_REASON_INDEX] = ffs(pon->warm_reset_reason1)-1;
+	}
+#endif
 
 	if (is_pon_gen1(pon) || pon->subtype == PON_1REG) {
 		rc = spmi_ext_register_readl(pon->spmi->ctrl, pon->spmi->sid,
@@ -2183,6 +2193,12 @@ static int qpnp_pon_probe(struct spmi_device *spmi)
 			"PMIC@SID%d Power-on reason: %s and '%s' boot\n",
 			pon->spmi->sid, qpnp_pon_reason[index],
 			cold_boot ? "cold" : "warm");
+#ifdef CONFIG_HUAWEI_KERNEL
+		/*we only restore SID0 power on reason*/
+		if (0 == pon->spmi->sid){
+			huawei_pon_regs[PON_REASON_INDEX] = index;
+		}
+#endif
 	}
 
 	/* POFF reason */
@@ -2213,6 +2229,12 @@ static int qpnp_pon_probe(struct spmi_device *spmi)
 				"PMIC@SID%d: Power-off reason: %s\n",
 				pon->spmi->sid,
 				qpnp_poff_reason[index]);
+#ifdef CONFIG_HUAWEI_KERNEL
+		/*we only restore SID0 power off reason*/
+		if (0 == pon->spmi->sid){
+			huawei_pon_regs[POFF_REASON_INDEX] = index;
+		}
+#endif
 	}
 
 	if (pon->pon_trigger_reason == PON_SMPL ||
